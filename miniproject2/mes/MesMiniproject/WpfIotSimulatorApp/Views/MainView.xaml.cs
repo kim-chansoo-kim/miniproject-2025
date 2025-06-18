@@ -76,19 +76,15 @@ namespace WpfIotSimulatorApp.Views
 
         private void StartSensorCheck()
         {
-            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+            // 센서 애니메이션        
+            DoubleAnimation sa = new DoubleAnimation
             {
-                DoubleAnimation sa = new DoubleAnimation
-                {
-                    From = 1,
-                    To = 0,
-                    Duration = TimeSpan.FromSeconds(1),
-                    AutoReverse = true
-                };
-                SortingSensor.BeginAnimation(OpacityProperty, sa);
-            }));
-
-
+                From = 1,
+                To = 0,
+                Duration = TimeSpan.FromSeconds(1),
+                AutoReverse = true
+            };
+            SortingSensor.BeginAnimation(OpacityProperty, sa);
         }
     }
 }
