@@ -88,6 +88,10 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
 
 
 
+5. 선별결과 MQTT로 전달 기능 추가
+
+
+
 ##### MQTT Subscirber
 - WPF 과목에서 사용했던 MQTT Subscirber 그대로 사용
 - WpfMqttSubApp 가져오기
