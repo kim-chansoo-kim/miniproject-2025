@@ -90,6 +90,8 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
 
 5. 선별결과 MQTT로 전달 기능 추가
 
+    <img src="../image/mp0005.png" width="600">
+
 ##### MQTT Subscirber
 - WPF 과목에서 사용했던 MQTT Subscirber 그대로 사용
 - WpfMqttSubApp 프로젝트 가져오기
@@ -97,15 +99,25 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
 
 1. 서비스 실행 중 확인
     - 콘솔에서 `telnet + ip주소 + 포트번호` 화면이 전환되면 접속성공
+2. MainViewModel.cs 혀재 Publish에 맞게 수정
+    - BrokerIP, Topic...
+3. EntityFramwork 사용, Database 테이블 모델화(DBFirst)
+4. config.json 파일, 설정파일 로드 클래스 작업
+5. 구독 결과
+
+<img src="../image/mp0004.png" width="600">
+
+<img src="../image/mp1004.png" width="600">
 
 ##### WPF 공정관리 앱 개발
+- 기본적인 DB관리 앱 + 실시간 공정 모니터링 + 리포트 시각화
+
+1. CommunityToolkit.Mvvm, MahApps.Metro 초기 설정
 
 #### 파이썬 AI + ASP.NET 연동
 - 참조 소스
 - iot-webapp-2025/ref/ReferencedSolution/ConvertWebApp
 - hungout-with-springboot/003_aicombob/
-
-
 
 
 ### 파이널프로젝트
