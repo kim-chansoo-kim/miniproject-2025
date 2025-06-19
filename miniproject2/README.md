@@ -90,12 +90,13 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
 
 5. 선별결과 MQTT로 전달 기능 추가
 
-
-
 ##### MQTT Subscirber
 - WPF 과목에서 사용했던 MQTT Subscirber 그대로 사용
-- WpfMqttSubApp 가져오기
-- Smarthome 작업했던 DB 저장부분 추가
+- WpfMqttSubApp 프로젝트 가져오기
+- Smarthome 작업했던 부분 수정 DB 저장부분 변경
+
+1. 서비스 실행 중 확인
+    - 콘솔에서 `telnet + ip주소 + 포트번호` 화면이 전환되면 접속성공
 
 ##### WPF 공정관리 앱 개발
 
