@@ -113,6 +113,17 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
 - 기본적인 DB관리 앱 + 실시간 공정 모니터링 + 리포트 시각화
 
 1. CommunityToolkit.Mvvm, MahApps.Metro 초기 설정
+2. MainView.xaml UI 디자인
+3. SettingView.xaml 생성
+4. Helpers.Common 클래스 정적 인스턴스 변수 작성
+5. SettingView 화면 UI 구현
+6. SetttngViewModel과 연동 작업
+7. Model DB 테이블 클래스 가져오기
+8. Setting 관련, DB연동 조회/입력/수정/삭제 기능 구현
+9. ScheduleView, ScheduleViewModel 초기 구현
+    - SettingView.xaml 복사 후 이름 변경, 클래스명 변경
+    - SettingViewModel.cs 복사 후 이름 변경, 클래스명 변경
+10. ScheduleView 데이터그리드, 입력양식 수정
 
 #### 파이썬 AI + ASP.NET 연동
 - 참조 소스
