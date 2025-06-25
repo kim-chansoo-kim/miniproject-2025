@@ -131,6 +131,15 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
     - Microsoft.EntityFrameworkCore
     - Microsoft.EntityFrameworkCore.Tools
     - Pomelo.EntityFrameworkCore.MySql
+12. ScheduleViewModel EntityFramework DB연동 처리
+
+    <img src="../image/mp0006.png" width="600">
+
+13. MonitoringView, MonitoringViewModel 생성
+14. WpfIoTSimulatorApp 화면 이전
+15. Monitoring DB연동, MQTT통신, 애니메이션 작업
+16. MQTT로 전송된 공정 성공/실패여부 DB 저장작업
+17. ReportView, ReportViewModel 작업
 
 #### 파이썬 AI + ASP.NET 연동
 - 참조 소스
