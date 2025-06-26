@@ -1,9 +1,7 @@
 ﻿using MahApps.Metro.Controls;
-using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using WpfIotSimulatorApp.ViewModels;
 
 namespace WpfIotSimulatorApp.Views
@@ -61,7 +59,7 @@ namespace WpfIotSimulatorApp.Views
             {
                 From = 1,
                 To = 0,
-                Duration = TimeSpan.FromSeconds(1),
+                Duration = TimeSpan.FromSeconds(50),
                 AutoReverse = true
             };
             SortingSensor.BeginAnimation(OpacityProperty, sa);

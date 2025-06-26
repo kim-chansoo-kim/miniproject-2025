@@ -22,7 +22,8 @@ namespace WpfIotSimulatorApp.ViewModels
 
         private IMqttClient mqttClient;
         private string brokerHost;
-        private string mqttTopic;
+        private string mqttPubTopic;
+        private string mqttSubTopic;
         private string clientId;
 
         private int logNum;
@@ -37,7 +38,8 @@ namespace WpfIotSimulatorApp.ViewModels
             // MQTT용 초기화
             brokerHost = "210.119.12.58";
             clientId = "IoT18"; // IoT장비번호
-            mqttTopic = "pknu/sf58/data"; // 스마트팩토리 토픽
+            mqttPubTopic = "pknu/sf58/data"; // 스마트팩토리 토픽
+            mqttSubTopic = "pknu/sf58/control";
             logNum = 1;
             InitMqttClient();
         }
@@ -89,13 +91,21 @@ namespace WpfIotSimulatorApp.ViewModels
 
             // 테스트 메시지
             var message = new MqttApplicationMessageBuilder()
-                .WithTopic(mqttTopic)
+                .WithTopic(mqttPubTopic)
                 .WithPayload("Hello From IoT Simulator!")
                 .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
                 .Build();
             // MQTT 브로커로 전송
             await mqttClient.PublishAsync(message);
             LogText = "MQTT 브로커에 메시지성공!!";
+
+            await mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(mqttSubTopic).Build());
+            mqttClient.ApplicationMessageReceivedAsync += MqttMessageReceivedAsync;
+        }
+
+        private async Task MqttMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
+        {
+            throw new NotImplementedException();
         }
         #endregion
         #region 이벤트 영역
@@ -142,7 +152,6 @@ namespace WpfIotSimulatorApp.ViewModels
             };
             #endregion
             // MQTT로 데이터 전송
-            // 테스트 메시지
             var resultText = result == 1 ? "OK" : "FAIL";
             var payload = new CheckResult
             {
@@ -152,7 +161,7 @@ namespace WpfIotSimulatorApp.ViewModels
             };
             var jsonPayload = JsonConvert.SerializeObject(payload, Formatting.Indented);
             var message = new MqttApplicationMessageBuilder()
-                .WithTopic(mqttTopic)
+                .WithTopic(mqttPubTopic)
                 .WithPayload(jsonPayload)
                 .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
                 .Build();
