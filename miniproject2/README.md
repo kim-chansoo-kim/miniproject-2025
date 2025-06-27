@@ -143,9 +143,11 @@ https://github.com/user-attachments/assets/6ff19a2d-b4a4-4931-9cc3-ee721613c941
     - 공정계획 순번으로 DB조회
     - Start버튼 눌러서 IoT Simulator 동작시키고 동기화
     - 체크이후 성공/실패 결과 DB에 저장, 실시간 시각화
+    <img src="../image/mp10042.png" width="600">
 
 
 
+https://github.com/user-attachments/assets/bfaa669e-a393-455d-b1ad-6eb3acded02c
 
 
 ##### 추후 작업(MiniProject 3)
