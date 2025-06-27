@@ -27,10 +27,18 @@ namespace WpfMrpSimulatorApp.ViewModels
         private string brokerHost;
         private string mqttSubTopic; // MQTT 메시지 받아올때 토픽
         private string mqttPubTopic; // MQTT 메시지 보낼때 토픽
-        private string clientId; // 클라이언트 본인 아이디
+        private string clientId;     // 클라이언트 본인 아이디
 
         #endregion
 
+
+
+        // 멤버 변수
+        private string _plantCode;      // IoT 시뮬레이터로 전달
+        private string _prcFacilityId;  // IoT 시뮬레이터로 전달
+        private bool _prcResult; // 공정 처리 결과 true(1) false(0)
+
+        #region 색상표시할 변수
         private Brush _productBrush;
         private string _plantName;
         private string _prcDate;
@@ -42,7 +50,7 @@ namespace WpfMrpSimulatorApp.ViewModels
         private string _successRate;
         private int _schIdx;
         private string _logText;
-
+        #endregion
 
         // 제품 배경색 바인딩 속성
         public Brush ProductBrush
@@ -162,17 +170,50 @@ namespace WpfMrpSimulatorApp.ViewModels
                 if (data.Result.ToUpper().Equals("OK")) // data.Result.ToUpper() == "OK"
                 {
                     SuccessAmount += 1;
+                    ProductBrush = Brushes.GreenYellow;
+                    _prcResult = true;
                 }
                 else if (data.Result.ToUpper().Equals("FAIL"))
                 {
                     FailAmount += 1;
+                    ProductBrush = Brushes.Crimson;
+                    _prcResult = false;
                 }
+                SuccessRate = String.Format("{0:0.0}", (SuccessAmount * 100.0 / (SuccessAmount +  FailAmount ))) + " %";
+
+                SetDataToProccess();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"{ex.Message}");
             }
             return Task.CompletedTask;
+        }
+
+        private void SetDataToProccess()
+        {
+            // DB연동
+            string query = @"INSERT INTO processes
+                                    (schIdx, prcCd, prcDate, prcLoadTime, prcFacilityId, prcResult, regDt) 
+                             VALUES
+                                    (@schIdx, @prcCd, @prcDate, @prcLoadTime, @prcFacilityId, @prcResult, now())";
+
+            using (MySqlConnection conn = new MySqlConnection(Common.CONNSTR)) 
+            {
+                conn.Open();
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@schIdx", SchIdx);
+                var prcCd = DateTime.Now.ToString("yyyy-MM-dd") + "-" + Guid.NewGuid();
+                cmd.Parameters.AddWithValue("@prcCd", prcCd);
+                cmd.Parameters.AddWithValue("@prcDate", PrcDate);
+                cmd.Parameters.AddWithValue("@prcLoadTime", PrcLoadTime);
+                cmd.Parameters.AddWithValue("@prcFacilityId", _prcFacilityId);
+                cmd.Parameters.AddWithValue("@prcResult", _prcResult);
+
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public event Action? StartHmiRequested;
@@ -235,6 +276,11 @@ namespace WpfMrpSimulatorApp.ViewModels
                     SchAmount = Convert.ToInt32(row["schAmount"]);
                     SuccessAmount = FailAmount = 0;
                     SuccessRate = "0.0%";
+                    // 위는 뷰로 보낼 속성
+
+                    // 뷰모델 내부에서 쓸 변수
+                    _plantCode = row["plantCode"].ToString();
+                    _prcFacilityId = row["schFacilityId"].ToString();
                 }
                 else
                 {
@@ -246,9 +292,11 @@ namespace WpfMrpSimulatorApp.ViewModels
                     SchAmount= 0;
                     SuccessAmount = FailAmount = 0;
                     SuccessRate = "0.0%";
+
+                    _plantCode = string.Empty;
+                    _prcFacilityId = string.Empty;
                     return;
                 }
-
             }
             catch (Exception ex)
             {
@@ -259,19 +307,50 @@ namespace WpfMrpSimulatorApp.ViewModels
         [RelayCommand]
         public async Task StartProcess()
         {
-            // MQTT Publish 추가
-            // 테스트 메시지
-            var message = new MqttApplicationMessageBuilder()
-                                .WithTopic(mqttPubTopic)
-                                .WithPayload("전달메시지!!")
-                                .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
-                                .Build();
+            try
+            {
+                // MQTT Publish 추가
+                // 실제 전달 메시지로 변경
+                var prcMsg = new PrcMsg
+                {
+                    ClientId = clientId,
+                    PlantCode = _plantCode,
+                    FacilityId = _prcFacilityId,
+                    Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Flag = "ON"
+                };
+                var payload = JsonConvert.SerializeObject(prcMsg, Formatting.Indented);
 
-            // MQTT 브로커로 전송
-            await mqttClient.PublishAsync(message);
+                var message = new MqttApplicationMessageBuilder()
+                                    .WithTopic(mqttPubTopic)
+                                    .WithPayload(payload)
+                                    .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
+                                    .Build();
 
-            ProductBrush = Brushes.DeepPink;
-            StartHmiRequested?.Invoke();
+                // MQTT 브로커로 전송
+                if (mqttClient.IsConnected)
+                {
+                    await mqttClient.PublishAsync(message);
+                }
+                else
+                {
+                    await this.dialogCoordinator.ShowMessageAsync(this, "MQTT", "접속불량!");
+                    // MQTT 클라이언트 접속 설정
+                    var options = new MqttClientOptionsBuilder()
+                                        .WithTcpServer(brokerHost, 1883)
+                                        .WithClientId(clientId)
+                                        .WithCleanSession(true)
+                                        .Build();
+                    await mqttClient.ConnectAsync(options);
+                }
+
+                ProductBrush = Brushes.DeepPink;
+                StartHmiRequested?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
     }
 }

@@ -4,8 +4,11 @@ using MQTTnet;
 using MQTTnet.Protocol;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using WpfIotSimulatorApp.Models;
 
@@ -13,6 +16,10 @@ namespace WpfIotSimulatorApp.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
+        #region MQTT 재접속용 변수
+        private Timer _mqttMonitorTimer;
+        private bool _isReconnecting = false;
+        #endregion
         private string _greeting;
         // 색상표시할 변수
         private Brush _productBrush;
@@ -27,6 +34,7 @@ namespace WpfIotSimulatorApp.ViewModels
         private string clientId;
 
         private int logNum;
+        private MqttClientOptions options;
 
         #endregion
 
@@ -42,9 +50,12 @@ namespace WpfIotSimulatorApp.ViewModels
             mqttSubTopic = "pknu/sf58/control";
             logNum = 1;
             InitMqttClient();
+
+            // MQTT 재접속 확인용 타이머 실행
+            StartMqttMonitor();
         }
 
-
+        
 
         public string Greeting
         {
@@ -69,6 +80,40 @@ namespace WpfIotSimulatorApp.ViewModels
 
         #endregion
         #region 일반메서드
+        private void StartMqttMonitor()
+        {
+            _mqttMonitorTimer = new Timer(async _ =>
+            {
+                await CheckMqttConnectionAsync();
+            }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(10));
+        }
+
+        // 핵심. MQTTClinet 접속이 끊어지면 재접속
+        private async Task CheckMqttConnectionAsync()
+        {
+            if (!mqttClient.IsConnected)
+            {
+                _isReconnecting = true;
+                LogText = "MQTT 연결해제. 재접속중...";
+                try
+                {
+                    // MQTT 클라이언트 접속 설정
+                    var mqttClientOptions = new MqttClientOptionsBuilder()
+                        .WithTcpServer(brokerHost, 1883)
+                        .WithClientId(clientId)
+                        .WithCleanSession(true)
+                        .Build();
+
+                    await mqttClient.ConnectAsync(options);
+                    LogText = "MQTT 재접속 성공!";
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"MQTT 재접속 실패 : {ex.Message}");
+                }
+            }
+        }
+
         private async Task InitMqttClient()
         {
             var mqttFactory = new MqttClientFactory();
@@ -103,9 +148,21 @@ namespace WpfIotSimulatorApp.ViewModels
             mqttClient.ApplicationMessageReceivedAsync += MqttMessageReceivedAsync;
         }
 
-        private async Task MqttMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
+        private Task MqttMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
         {
-            throw new NotImplementedException();
+            var payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+
+            var data = JsonConvert.DeserializeObject<PrcMsg>(payload);
+
+            //LogText = data.Flag;
+            if (data.Flag.ToUpper() == "ON")
+            {
+                Move();
+                Thread.Sleep(2000);
+                Check();
+            }
+
+            return Task.CompletedTask;
         }
         #endregion
         #region 이벤트 영역
@@ -118,13 +175,19 @@ namespace WpfIotSimulatorApp.ViewModels
         public void Move()
         {
             ProductBrush = Brushes.DeepPink;
-            StartHmiRequested?.Invoke(); // 컨베이어벨트 애니메이션 요청 (View에서 처리)
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                StartHmiRequested?.Invoke(); // 컨베이어벨트 애니메이션 요청 (View에서 처리)
+            });
         }
 
         [RelayCommand]
         public void Check()
         {
-            StartSensorCheckRequested?.Invoke();
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                StartSensorCheckRequested?.Invoke();
+            });
 
             // 양품/불량품 판단
             Random rand = new();
